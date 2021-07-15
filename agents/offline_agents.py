@@ -32,6 +32,7 @@ import logging
 
 import numpy as np
 import torch
+
 import tqdm
 import hydra
 
@@ -574,21 +575,21 @@ class FwdAgent(Agent):
             else:
                 obj_fwd_model = None
             dataset = PhyreDataset(
-                cfg.tier,
-                train_task_ids,
-                task_indices,
-                is_solved,
-                actions,
-                cfg.simulator,
-                mode='train',
-                balance_classes=cfg.train.data_loader.balance_classes,
-                hard_negatives=cfg.train.data_loader.hard_negatives,
-                init_clip_ratio_to_sim=cfg.train.init_clip_ratio_to_sim,
-                frames_per_clip=cfg.train.frames_per_clip,
-                n_hist_frames=cfg.train.n_hist_frames,
-                shuffle_indices=cfg.train.shuffle_indices,
-                drop_objs=cfg.train.drop_objs,
-                obj_fwd_model=obj_fwd_model)
+                cfg.tier, #ball
+                train_task_ids, #len 2000 tasks
+                task_indices, #
+                is_solved, #
+                actions, #
+                cfg.simulator, #cfg.simulator
+                mode='train', #train
+                balance_classes=cfg.train.data_loader.balance_classes, #True
+                hard_negatives=cfg.train.data_loader.hard_negatives, #0.0
+                init_clip_ratio_to_sim=cfg.train.init_clip_ratio_to_sim, #-1
+                frames_per_clip=cfg.train.frames_per_clip, #4
+                n_hist_frames=cfg.train.n_hist_frames, #3
+                shuffle_indices=cfg.train.shuffle_indices, #False
+                drop_objs=cfg.train.drop_objs, #''
+                obj_fwd_model=obj_fwd_model) #None
             fwd_model = trainer.train(init_model, dataset, output_dir,
                                       summary_writer, full_eval_from_model,
                                       cfg)

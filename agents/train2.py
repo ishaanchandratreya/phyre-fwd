@@ -99,8 +99,13 @@ def main(cfg):
     # again with a different override param (eg to generate vis etc), even if
     # it overwrites the config files and destroy that information, the original
     # info is stored and avlbl when making graphs etc
+
     if not os.path.exists('.hydra.orig'):
         subprocess.call('cp -r .hydra .hydra.orig', shell=True)
+
+    print(cfg.num_gpus)
+
+
     templates_tasks = None
     if ':' in cfg.eval_setup_name:
         # Means that we only want template IDs defined after the ":"
@@ -253,4 +258,12 @@ if __name__ == '__main__':
                                 ' {%(module)s:%(lineno)d} %(message)s'),
                         level=logging.DEBUG,
                         datefmt='%Y-%m-%d %H:%M:%S')
+
+    import os
+    import time
+    servername = os.uname().nodename
+
+    print(servername)
+    time.sleep(5)
+
     main()  # pylint: disable=no-value-for-parameter  # Uses hydra

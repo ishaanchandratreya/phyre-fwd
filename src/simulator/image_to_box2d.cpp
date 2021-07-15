@@ -424,7 +424,7 @@ float wrapAngleRadians(float angle) {
 
 void featurizeBody(const Body& body, int sceneHeight, int sceneWidth,
                    float* buffer) {
-  static_assert(kObjectFeatureSize == 14);
+  static_assert(kObjectFeatureSize == 14, "err");
   *buffer++ = static_cast<float>(body.position.x) / sceneWidth;
   *buffer++ = static_cast<float>(body.position.y) / sceneHeight;
   *buffer++ = wrapAngleRadians(body.angle) / (2. * M_PI);

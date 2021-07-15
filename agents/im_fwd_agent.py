@@ -14,6 +14,7 @@
 """This library contains actual implementation of Fwd modeling."""
 from typing import Sequence, Tuple
 import logging
+from copy import deepcopy
 import os
 import time
 import glob
@@ -530,119 +531,139 @@ class ImgTrainer(object):
             subprocess.call(f'rm {out_dir}/*.gif', shell=True)
             subprocess.call(f'rm -r {out_dir}/eval_vis', shell=True)
 
-        scores = []
-        actions = []
-        task_indices = []
-        pixel_accs = []  # If generating output, how accurately did we do
-        with torch.no_grad():
-            model.eval()
-            for batch_id, batch_data in enumerate(
-                    tqdm(torch.utils.data.DataLoader(
-                        dataset,
-                        num_workers=get_num_workers(
-                            cfg.eval.data_loader.num_workers,
-                            dataset.frames_per_clip),
-                        pin_memory=False,
-                        batch_size=batch_size,
-                        drop_last=False),
-                         desc='All tasks X actions batches',
-                         total=nactionsXtasks // batch_size)):
-                batch_task_indices = batch_data['task_indices']
-                batch_vid_obs = batch_data[
-                    f'{cfg.agent.input_space}_obs'].squeeze(1)
-                batch_vid_obs_orig = batch_data[
-                    f'{cfg.agent.input_space}_obs_orig'].squeeze(1)
-                batch_actions = batch_data['actions']
-                # Since the code might be run with DataParallel, need to make sure
-                # the batch size is divisible by the ngpus, so stick to the
-                # requested batch size by padding actions.
-                uniq_batch_size = batch_actions.shape[0]
-                pad_len = max(batch_size - uniq_batch_size, 0)
-                batch_vid_obs = pad_tensor(batch_vid_obs, pad_len)
 
-                # Setting run_decode always true when true in training..
-                # (earlier only when visualizing)
-                # Sometimes evaluation might depend on the decoded frame, so might
-                # as well...
-                other_kwargs = {
-                    'need_intermediate': True,
-                    'run_decode': train_run_decode,
-                    'nslices': 1
-                }
-                all_preds, batch_losses = model.forward(
-                    batch_vid_obs,
-                    None,
-                    n_hist_frames=n_hist_frames,
-                    n_fwd_times=n_fwd_times,
-                    compute_losses=False,
-                    **other_kwargs)
+        if os.path.exists('temp_storage'):
 
-                # Unpad parts of all_preds that will be used further
-                # Since the model is trained with BCELoss, normalize using sigmoid
-                # On 2020/02/11, I changed it to return only one prediction for
-                # any n_fwd_times (max-pool all to give 1 prediction), hence this
-                # list will only contain a single element. To stay consistent with
-                # prior code that expects a prediction at each time step, simply
-                # repeating that prediction n_fwd_times.
+            final_scores = torch.load(os.path.join('temp_storage', 'final_scores.pt'))
+            final_actions = torch.load(os.path.join('temp_storage', 'final_actions.pt'))
+            final_task_indices = torch.load(os.path.join('temp_storage', 'final_task_indices.pt'))
+            final_pixel_accs = torch.load(os.path.join('temp_storage', 'final_pixel_accs.pt'))
 
-                batch_scores = nn.Sigmoid()(unpad_tensor(
-                    all_preds['is_solved'], pad_len))
-                batch_vid_obs = unpad_tensor(batch_vid_obs, pad_len)
+        else:
+            scores = []
+            actions = []
+            task_indices = []
+            pixel_accs = []  # If generating output, how accurately did we do
+            with torch.no_grad():
+                model.eval()
+                for batch_id, batch_data in enumerate(
+                        tqdm(torch.utils.data.DataLoader(
+                            dataset,
+                            num_workers=get_num_workers(
+                                cfg.eval.data_loader.num_workers,
+                                dataset.frames_per_clip),
+                            pin_memory=False,
+                            batch_size=batch_size,
+                            drop_last=False),
+                             desc='All tasks X actions batches',
+                             total=nactionsXtasks // batch_size)):
+                    batch_task_indices = batch_data['task_indices']
+                    print(batch_id)
+                    batch_vid_obs = batch_data[
+                        f'{cfg.agent.input_space}_obs'].squeeze(1)
+                    batch_vid_obs_orig = batch_data[
+                        f'{cfg.agent.input_space}_obs_orig'].squeeze(1)
+                    batch_actions = batch_data['actions']
+                    # Since the code might be run with DataParallel, need to make sure
+                    # the batch size is divisible by the ngpus, so stick to the
+                    # requested batch size by padding actions.
+                    uniq_batch_size = batch_actions.shape[0]
+                    pad_len = max(batch_size - uniq_batch_size, 0)
+                    batch_vid_obs = pad_tensor(batch_vid_obs, pad_len)
 
-                if store_vis:
-                    # Sum the vid obs over the channels, in case it was split into
-                    # components
-                    if cfg.agent.input_space == 'obj':
-                        # update to videos, for storing vis
-                        batch_vid_obs = batch_data['vid_obs'].squeeze(1)
-                        batch_vid_obs_orig = batch_data[
-                            'vid_obs_orig'].squeeze(1)
-                        batch_vid_obs = pad_tensor(batch_vid_obs, pad_len)
-                        batch_vid_obs = unpad_tensor(batch_vid_obs, pad_len)
+                    # Setting run_decode always true when true in training..
+                    # (earlier only when visualizing)
+                    # Sometimes evaluation might depend on the decoded frame, so might
+                    # as well...
+                    other_kwargs = {
+                        'need_intermediate': True,
+                        'run_decode': train_run_decode,
+                        'nslices': 1
+                    }
+                    all_preds, batch_losses = model.forward(
+                        batch_vid_obs,
+                        None,
+                        n_hist_frames=n_hist_frames,
+                        n_fwd_times=n_fwd_times,
+                        compute_losses=False,
+                        **other_kwargs)
 
-                    task_ids = batch_data['task_ids']
-                    _, pixel_acc, gt_frames, pred_frames = cls.vis_stacked_pred_gt(
-                        torch.sum(batch_vid_obs_orig, axis=-3).cpu().numpy(),
-                        torch.sum(batch_vid_obs, dim=-3), [
-                            unpad_tensor(el.cpu(), pad_len)
-                            for el in all_preds['pixels']
-                        ])
-                    '''
-                        [batch_scores] * len(all_preds['pixels']),
-                        # Could take any batch_task_indices, all are same
-                        '{}/{:04d}_{:04d}.gif'.format(out_dir,
-                                                      batch_task_indices[0],
-                                                      batch_id))
-                    '''
-                    # Also store pure frames individually, will be used for rollout
-                    # accuracy evaluation
-                    store_frames(gt_frames, task_ids, out_dir, 'gt',
-                                 batch_actions)
-                    store_frames(pred_frames, task_ids, out_dir, 'predictions',
-                                 batch_actions)
-                else:
-                    pixel_acc = torch.zeros(
-                        (batch_scores.shape[0], phyre.NUM_COLORS))
-                assert len(batch_scores) == len(batch_actions), (
-                    batch_actions.shape, batch_scores.shape)
-                # IMP: Don't convert to cpu() numpy() here.. it makes the function
-                # much slower. Convert in one go at the end when returning
-                scores.append(batch_scores)
-                pixel_accs.append(pixel_acc)
-                actions.append(batch_actions)
-                task_indices.append(batch_task_indices)
-        # There is only 1 element in scores, but unsqueezing so that
-        # it's compatible with following code that expects a score prediction
-        # over time. Here it will give 1 prediction, the final one.
-        final_scores = torch.cat(scores, dim=0).unsqueeze(0).cpu().numpy()
-        final_actions = torch.cat(actions, dim=0).cpu().numpy()
-        final_task_indices = torch.cat(task_indices, dim=0).cpu().numpy()
-        final_pixel_accs = torch.cat(pixel_accs, dim=0).cpu().numpy()
-        if nactionsXtasks != len(final_actions):
-            logging.warning('Only evaluated %d actions instead of full %d',
-                            len(final_actions), nactionsXtasks)
-            assert (nactionsXtasks - len(actions)) <= batch_size, (
-                'Shouldnt miss more')
+                    # Unpad parts of all_preds that will be used further
+                    # Since the model is trained with BCELoss, normalize using sigmoid
+                    # On 2020/02/11, I changed it to return only one prediction for
+                    # any n_fwd_times (max-pool all to give 1 prediction), hence this
+                    # list will only contain a single element. To stay consistent with
+                    # prior code that expects a prediction at each time step, simply
+                    # repeating that prediction n_fwd_times.
+
+                    batch_scores = nn.Sigmoid()(unpad_tensor(
+                        all_preds['is_solved'], pad_len))
+                    batch_vid_obs = unpad_tensor(batch_vid_obs, pad_len)
+
+                    if store_vis:
+                        # Sum the vid obs over the channels, in case it was split into
+                        # components
+                        if cfg.agent.input_space == 'obj':
+                            # update to videos, for storing vis
+                            batch_vid_obs = batch_data['vid_obs'].squeeze(1)
+                            batch_vid_obs_orig = batch_data[
+                                'vid_obs_orig'].squeeze(1)
+                            batch_vid_obs = pad_tensor(batch_vid_obs, pad_len)
+                            batch_vid_obs = unpad_tensor(batch_vid_obs, pad_len)
+
+                        task_ids = batch_data['task_ids']
+                        _, pixel_acc, gt_frames, pred_frames = cls.vis_stacked_pred_gt(
+                            torch.sum(batch_vid_obs_orig, axis=-3).cpu().numpy(),
+                            torch.sum(batch_vid_obs, dim=-3), [
+                                unpad_tensor(el.cpu(), pad_len)
+                                for el in all_preds['pixels']
+                            ])
+                        '''
+                            [batch_scores] * len(all_preds['pixels']),
+                            # Could take any batch_task_indices, all are same
+                            '{}/{:04d}_{:04d}.gif'.format(out_dir,
+                                                          batch_task_indices[0],
+                                                          batch_id))
+                        '''
+                        # Also store pure frames individually, will be used for rollout
+                        # accuracy evaluation
+                        store_frames(gt_frames, task_ids, out_dir, 'gt',
+                                     batch_actions)
+                        store_frames(pred_frames, task_ids, out_dir, 'predictions',
+                                     batch_actions)
+                    else:
+                        pixel_acc = torch.zeros(
+                            (batch_scores.shape[0], phyre.NUM_COLORS))
+                    assert len(batch_scores) == len(batch_actions), (
+                        batch_actions.shape, batch_scores.shape)
+                    # IMP: Don't convert to cpu() numpy() here.. it makes the function
+                    # much slower. Convert in one go at the end when returning
+                    scores.append(deepcopy(batch_scores))
+                    pixel_accs.append(deepcopy(pixel_acc))
+                    actions.append(deepcopy(batch_actions))
+                    task_indices.append(deepcopy(batch_task_indices))
+            # There is only 1 element in scores, but unsqueezing so that
+            # it's compatible with following code that expects a score prediction
+            # over time. Here it will give 1 prediction, the final one.
+            final_scores = torch.cat(scores, dim=0).unsqueeze(0).cpu().numpy()
+            final_actions = torch.cat(actions, dim=0).cpu().numpy()
+            final_task_indices = torch.cat(task_indices, dim=0).cpu().numpy()
+            final_pixel_accs = torch.cat(pixel_accs, dim=0).cpu().numpy()
+
+            if not os.path.exists('temp_storage'):
+                os.makedirs('temp_storage')
+
+            torch.save(final_scores, os.path.join('temp_storage', 'final_scores.pt'))
+            torch.save(final_actions, os.path.join('temp_storage', 'final_actions.pt'))
+            torch.save(final_task_indices, os.path.join('temp_storage', 'final_task_indices.pt'))
+            torch.save(final_pixel_accs, os.path.join('temp_storage', 'final_pixel_accs.pt'))
+
+            if nactionsXtasks != len(final_actions):
+                logging.warning('Only evaluated %d actions instead of full %d',
+                                len(final_actions), nactionsXtasks)
+                assert (nactionsXtasks - len(actions)) <= batch_size, (
+                    'Shouldnt miss more')
+
         return final_scores, final_actions, final_task_indices, final_pixel_accs
 
     @classmethod

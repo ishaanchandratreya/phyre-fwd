@@ -94,6 +94,16 @@ def get_fold(eval_setup: str, seed: int
     return train_ids, dev_ids, test_ids
 
 
+def is_task_in_eval_setup(eval_setup: EvalSetup, task_template):
+
+    for train_ids, test_groups in eval_setup:
+        for train_id in train_ids:
+            if task_template in train_id:
+
+                return True
+
+    return False
+
 def _flatten_eval_setup(eval_setup: EvalSetup
                        ) -> Tuple[Tuple[str, ...], Tuple[str, ...]]:
     all_train_ids, all_test_ids = [], []

@@ -53,6 +53,8 @@ class ForwardBaseModel(nn.Module):
             return 'cpu'
 
 
+
+
 class FwdPositionalEncoding(nn.Module):
 
     def __init__(self,
