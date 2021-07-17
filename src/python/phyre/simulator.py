@@ -237,6 +237,7 @@ def magic_ponies(task,
         serialized_task = task
         height, width = creator.SCENE_HEIGHT, creator.SCENE_WIDTH
     else:
+
         serialized_task = serialize(task)
         height, width = task.scene.height, task.scene.width
     if isinstance(user_input, scene_if.UserInput):
@@ -248,6 +249,9 @@ def magic_ponies(task,
                                                     need_featurized_objects,
                                                     perturb_step,
                                                     stop_after_solved))
+
+        #print(packed_featurized_objects)
+
     else:
         points, rectangulars, balls = _prepare_user_input(*user_input)
         is_solved, had_occlusions, packed_images, packed_featurized_objects, number_objects, sim_time, pack_time = (

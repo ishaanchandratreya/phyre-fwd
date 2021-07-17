@@ -155,7 +155,7 @@ class FeaturizedObjects():
     :ivar num_objects: (int) Number of objects in the simulation_states
     :ivar num_scene_obejcts: (int) Number of scene objects in the simulation.
     """
-    _NUM_FEATURES = 14
+    _NUM_FEATURES = 17
 
     _X_INDEX = 0
     _Y_INDEX = 1
@@ -164,7 +164,10 @@ class FeaturizedObjects():
     _SHAPE_START_INDEX = 4
     _SHAPE_END_INDEX = 8
     _COLOR_START_INDEX = _SHAPE_END_INDEX
-    _COLOR_END_INDEX = _NUM_FEATURES
+    _COLOR_END_INDEX = 14
+    _VX_INDEX = 14
+    _VY_INDEX = 15
+    _AV_INDEX = 16
 
     _STATE_START_INDEX = 0
     _STATE_END_INDEX = _DIAMETER_INDEX
@@ -176,7 +179,8 @@ class FeaturizedObjects():
         assert featurized_objects.shape[-1] == self._NUM_FEATURES, (
             f'Input must be of shape TxNx{self._NUM_FEATURES}'
             f', got {featurized_objects.shape}')
-        self.features = featurized_objects
+        self.features = featurized_objects[:, :, :14]
+        self.full_features = featurized_objects
 
         self.xs = featurized_objects[:, :, self._X_INDEX]
         self.ys = featurized_objects[:, :, self._Y_INDEX]
@@ -189,6 +193,11 @@ class FeaturizedObjects():
 
         self.states = featurized_objects[:, :, self._STATE_START_INDEX:self.
                                          _STATE_END_INDEX]
+
+        self.vxs = featurized_objects[:, :, self._VX_INDEX]
+        self.vys = featurized_objects[:, :, self._VY_INDEX]
+
+        self.avs = featurized_objects[:, :, self._AV_INDEX]
 
         self._shapes = None
         self._colors = None

@@ -66,6 +66,8 @@ void perturbSimulation(std::unique_ptr<b2WorldWithData> &world) {
   const bool allowInstantSolution =
       (task != nullptr && task->relationships.size() == 1 &&
        task->relationships[0] == ::task::SpatialRelationship::TOUCHING_BRIEFLY);
+
+  scenes.push_back(updateSceneFromWorld(scene, *world));
   for (; step < request.maxSteps; step++) {
     // Instruct the world to perform a single step of simulation.
     // It is generally best to keep the time step and iterations fixed.
@@ -73,7 +75,7 @@ void perturbSimulation(std::unique_ptr<b2WorldWithData> &world) {
     if (step == request.perturbStep && request.perturbStep != -1) {
       perturbSimulation(world);
     }
-    if (request.stride > 0 && step % request.stride == 0) {
+    if (request.stride > 0 && (step+1) % request.stride == 0) {
       scenes.push_back(updateSceneFromWorld(scene, *world));
     }
     if (task == nullptr) {

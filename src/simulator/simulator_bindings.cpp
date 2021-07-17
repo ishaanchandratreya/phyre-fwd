@@ -17,6 +17,7 @@
 #include <chrono>
 #include <memory>
 #include <vector>
+#include <typeinfo>
 
 #include <thrift/protocol/TBinaryProtocol.h>
 #include <thrift/transport/TBufferTransports.h>
@@ -96,6 +97,9 @@ UserInput buildUserInputObject(
     circle.position.__set_x(balls_flatten[i++]);
     circle.position.__set_y(balls_flatten[i++]);
     circle.__set_radius(balls_flatten[i++]);
+    circle.velocity.__set_x(balls_flatten[i++]);
+    circle.velocity.__set_y(balls_flatten[i++]);
+    circle.__set_angular_velocity(balls_flatten[i++]);
     user_input.balls.push_back(circle);
   }
 
@@ -149,10 +153,23 @@ auto magic_ponies(const std::vector<unsigned char> &serialized_task,
                   int perturb_step = -1, bool stop_after_solved = true) {
   SimpleTimer timer;
   Task task = deserialize<Task>(serialized_task);
+
+  //std::cout << task.scene.bodies[4].position.x / task.scene.width << std::endl;
+  //std::cout << task.scene.bodies[4].position.y / task.scene.height << std::endl;
+
   addUserInputToScene(user_input, keep_space_around_bodies,
                       /*allow_occlusions=*/false, &task.scene);
+
+  //std::cout << task.scene.bodies[4].position.x / task.scene.width << std::endl;
+  //std::cout << task.scene.bodies[4].position.y / task.scene.height << std::endl;
+
+
   auto simulation = simulateTask(task, steps, stride, perturb_step,
                                 stop_after_solved);
+
+  //std::cout << simulation.sceneList[0].bodies[4].position.x / simulation.sceneList[0].width << std::endl;
+  //std::cout << simulation.sceneList[0].bodies[4].position.y / simulation.sceneList[0].height << std::endl;
+
 
   const double simulation_seconds = timer.GetSeconds();
   const bool isSolved = simulation.isSolution;

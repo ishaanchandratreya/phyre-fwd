@@ -30,6 +30,6 @@ bool cmpIntVector(const ::scene::IntVector& a, const ::scene::IntVector& b);
                            const std::vector<::scene::Vector>& vertices,
                            float angle = 0, bool dynamic = true);
 
-::scene::Body buildCircle(float x, float y, float radius, bool dynamic = true);
+::scene::Body buildCircle(float x, float y, float radius, float vx, float vy, float angular_v, bool dynamic = true);
 
 #endif  // CREATOR_H_

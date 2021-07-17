@@ -317,7 +317,7 @@ class Body(object):
 
     def set(self, **attributes):
         order = ('angle', 'left', 'right', 'top', 'bottom', 'center_x',
-                 'center_y', 'color')
+                 'center_y', 'color', 'vel_x', 'vel_y', 'angular_velocity')
         for name in order:
             if name in attributes:
                 getattr(self, 'set_' + name)(attributes.pop(name))
@@ -399,6 +399,16 @@ class Body(object):
                 f'Color {color} is not allowed for static bodies.')
         self.color = color
         self._thrift_body.color = color_id
+        return self
+
+    def set_vel_x(self, x):
+
+        self._thrift_body.velocity.x += x
+        return self
+
+    def set_vel_y(self, y):
+
+        self._thrift_body.velocity.y += y
         return self
 
     @property

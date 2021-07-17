@@ -49,9 +49,11 @@ bool cmpIntVector(const ::scene::IntVector& a, const ::scene::IntVector& b) {
   return buildPolygon(x, y, vertices, angle, dynamic);
 }
 
-::scene::Body buildCircle(float x, float y, float radius, bool dynamic) {
+::scene::Body buildCircle(float x, float y, float radius, float vx, float vy, float angular_v, bool dynamic) {
   ::scene::Body body;
   body.__set_position(getVector(x, y));
+  body.__set_velocity(getVector(vx, vy));
+  body.__set_angular_velocity(angular_v);
   ::scene::Circle circle;
   circle.__set_radius(radius);
   ::scene::Shape shape;

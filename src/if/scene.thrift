@@ -65,6 +65,8 @@ struct Body {
   5: optional shared.Color color,
   6: optional ShapeType shapeType = SHAPE_TYPE.UNDEFINED,
   7: optional double diameter,
+  8: optional Vector velocity,
+  9: optional double angular_velocity,
 }
 
 // Convex polygon with absolutely positions vecrticies.
@@ -77,6 +79,8 @@ struct AbsoluteConvexPolygon {
 struct CircleWithPosition {
   1: optional Vector position,
   2: optional double radius,
+  3: optional Vector velocity,
+  4: optional double angular_velocity,
 }
 
 struct UserInput {
