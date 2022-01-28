@@ -67,6 +67,12 @@ struct Body {
   7: optional double diameter,
   8: optional Vector velocity,
   9: optional double angular_velocity,
+  10: optional double gravity_scale = 1.0,
+  11: optional double linear_damping = 0.0,
+  12: optional double angular_damping = 0.01,
+  13: optional double density = 0.25,
+  14: optional double friction = 0.5,
+  15: optional double restitution = 0.2,
 }
 
 // Convex polygon with absolutely positions vecrticies.

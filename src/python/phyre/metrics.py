@@ -59,6 +59,7 @@ def eval_setup_to_action_tier(eval_setup_name: str) -> str:
     for tier in phyre.action_mappers.ACTION_MAPPERS:
         if eval_setup_name.startswith(tier):
             return tier
+
     raise ValueError('Failed to derive action tier for eval setup %s' %
                      eval_setup_name)
 

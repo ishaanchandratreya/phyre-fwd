@@ -70,13 +70,12 @@ def finalize_featurized_objects(featurized_objects: np.ndarray,
     is_jar = featurized_objects[:, :, FeaturizedObjects._SHAPE_START_INDEX +
                                 scene_if.ShapeType.JAR - 1] == 1
     if featurized_objects[is_jar].shape[0] > 0:
-        offsets = np.apply_along_axis(_get_jar_offset, 1,
-                                      featurized_objects[0, :, :][is_jar[0, :]])
-        offsets_expanded = np.concatenate([offsets] *
-                                          featurized_objects.shape[0],
-                                          axis=0)
-        angles = featurized_objects[is_jar][:, FeaturizedObjects.
-                                            _ANGLE_INDEX] * 2 * math.pi
+        offsets = np.apply_along_axis(_get_jar_offset, 1, featurized_objects[0, :, :][is_jar[0, :]])
+
+        offsets_expanded = np.concatenate([offsets] * featurized_objects.shape[0], axis=0)
+
+        angles = featurized_objects[is_jar][:, FeaturizedObjects._ANGLE_INDEX] * 2 * math.pi
+
         directional_offsets = np.stack(
             [
                 -1 * offsets_expanded * np.sin(angles),

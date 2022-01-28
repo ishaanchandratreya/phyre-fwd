@@ -174,25 +174,31 @@ class Unscaler(object):
     MIN_RADIUS = 2
     MAX_RADIUS = max(SCENE_WIDTH, SCENE_HEIGHT) // 8
     assert MIN_RADIUS < MAX_RADIUS
+    MIN_ANGULAR_VELOCITY = -5 * 2 * np.pi
+    MAX_ANGULAR_VELOCITY = 5 * 2 * np.pi
+    MIN_VX, MIN_VY = -SCENE_WIDTH, -SCENE_HEIGHT
+    MAX_VX, MAX_VY = SCENE_WIDTH, SCENE_HEIGHT
 
     @classmethod
     def unscale(cls, x, y, radius):
 
         x = _unscale(x, 0, SCENE_WIDTH - 1)
-        y = _unscale(x, 0, SCENE_HEIGHT - 1)
+        y = _unscale(y, 0, SCENE_HEIGHT - 1)
         radius = _unscale(radius, cls.MIN_RADIUS, cls.MAX_RADIUS)
+
+        return x, y, radius
 
     @classmethod
     def unscale_with_velocities(cls, x, y, radius, vx, vy, av):
 
-        x = _unscale(x, 0, SCENE_WIDTH - 1)
-        y = _unscale(y, 0, SCENE_HEIGHT - 1)
-        radius = _unscale(radius, cls.MIN_RADIUS, cls.MAX_RADIUS)
-        vx = _unscale(vx, 0, SCENE_WIDTH - 1)
-        vy = _unscale(vy, 0, SCENE_HEIGHT - 1)
-        angular_vel = av
+        x_new = _unscale(x, 0, SCENE_WIDTH - 1)
+        y_new = _unscale(y, 0, SCENE_HEIGHT - 1)
+        radius_new = _unscale(radius, cls.MIN_RADIUS, cls.MAX_RADIUS)
+        vx_new = _unscale(vx, cls.MIN_VX, cls.MAX_VX)
+        vy_new = _unscale(vy, cls.MIN_VY, cls.MAX_VY)
+        angular_vel = _unscale(av, cls.MIN_ANGULAR_VELOCITY, cls.MAX_ANGULAR_VELOCITY)
 
-        return x, y, radius, vx, vy, angular_vel
+        return x_new, y_new, radius_new, vx_new, vy_new, angular_vel
 
 
 class BallScalerWithVelocities(object):
@@ -200,19 +206,19 @@ class BallScalerWithVelocities(object):
     MIN_RADIUS = 2
     MAX_RADIUS = max(SCENE_WIDTH, SCENE_HEIGHT) // 8
     assert MIN_RADIUS < MAX_RADIUS
-    #MIN_ANGULAR_VELOCITY
-    #MAX_ANGULAR_VELOCITY
-    #MIN_VX, VY
-    #MAX_VY, VY
+    MIN_ANGULAR_VELOCITY = -5 * 2 * np.pi
+    MAX_ANGULAR_VELOCITY = 5 * 2 * np.pi
+    MIN_VX, MIN_VY = -SCENE_WIDTH, -SCENE_HEIGHT
+    MAX_VX, MAX_VY = SCENE_WIDTH, SCENE_HEIGHT
 
     @classmethod
     def scale(cls, x, y, radius, vx, vy, angular_velocity):
         x_new = _scale(x, 0, SCENE_WIDTH - 1)
         y_new = _scale(y, 0, SCENE_HEIGHT - 1)
         radius_new = _scale(radius, cls.MIN_RADIUS, cls.MAX_RADIUS)
-        vx_new = _scale(vx, 0, SCENE_WIDTH - 1)
-        vy_new = _scale(vy, 0, SCENE_HEIGHT - 1)
-        ang_vel = angular_velocity
+        vx_new = _scale(vx, cls.MIN_VX, cls.MAX_VX)
+        vy_new = _scale(vy, cls.MIN_VY, cls.MAX_VY)
+        ang_vel = _scale(angular_velocity, cls.MIN_ANGULAR_VELOCITY, cls.MAX_ANGULAR_VELOCITY)
 
 
         return x_new, y_new, radius_new, vx_new, vy_new, ang_vel
@@ -330,7 +336,7 @@ class TwoBallsActionMapper(ActionMapper):
 class SingleBallWithVelocitiesActionMapper(ActionMapper):
 
     OCCLUSIONS_ALLOWED = False
-    KEEP_SPACE_AROUND_BODIES = True
+    KEEP_SPACE_AROUND_BODIES = False
     DIMENSION_TYPES = (DimensionType.POSITION, DimensionType.POSITION, DimensionType.SIZE, DimensionType.VELOCITY,
                        DimensionType.VELOCITY, DimensionType.ANGULAR_VELOCITY)
 
@@ -411,6 +417,9 @@ ACTION_MAPPERS: Dict[str, ActionMapper] = dict(
     ramp=RampActionMapper,
     ball_v=SingleBallWithVelocitiesActionMapper,
 )
+
+#    ball_v=SingleBallWithVelocitiesActionMapper,
+#)
 
 
 MAIN_ACITON_MAPPERS: FrozenSet[str] = frozenset({'ball', 'two_balls'})

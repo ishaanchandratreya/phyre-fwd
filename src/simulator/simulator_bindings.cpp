@@ -150,22 +150,26 @@ auto magic_ponies(const std::vector<unsigned char> &serialized_task,
                   const UserInput &user_input, bool keep_space_around_bodies,
                   int steps, int stride, bool need_images,
                   bool need_featurized_objects,
-                  int perturb_step = -1, bool stop_after_solved = true) {
+                  int perturb_step = -1, bool stop_after_solved = true,
+                  int perturb_type = -1) {
+
   SimpleTimer timer;
   Task task = deserialize<Task>(serialized_task);
 
   //std::cout << task.scene.bodies[4].position.x / task.scene.width << std::endl;
   //std::cout << task.scene.bodies[4].position.y / task.scene.height << std::endl;
 
+
+  //TODO: make allow occlusions an accepting parameter
   addUserInputToScene(user_input, keep_space_around_bodies,
-                      /*allow_occlusions=*/false, &task.scene);
+                      /*allow_occlusions=*/true, &task.scene);
 
   //std::cout << task.scene.bodies[4].position.x / task.scene.width << std::endl;
   //std::cout << task.scene.bodies[4].position.y / task.scene.height << std::endl;
 
 
   auto simulation = simulateTask(task, steps, stride, perturb_step,
-                                stop_after_solved);
+                                stop_after_solved, perturb_type);
 
   //std::cout << simulation.sceneList[0].bodies[4].position.x / simulation.sceneList[0].width << std::endl;
   //std::cout << simulation.sceneList[0].bodies[4].position.y / simulation.sceneList[0].height << std::endl;
@@ -304,13 +308,14 @@ PYBIND11_MODULE(simulator_bindings, m) {
          const std::vector<float> &balls_flatten, bool keep_space_around_bodies,
          int steps, int stride, bool need_images,
          bool need_featurized_objects, int perturb_step,
-         bool stop_after_solved) {
+         bool stop_after_solved, int perturb_type) {
         const UserInput user_input = buildUserInputObject(
             points, rectangulars_vertices_flatten, balls_flatten);
         return magic_ponies(serialized_task, user_input,
                             keep_space_around_bodies, steps, stride,
                             need_images, need_featurized_objects,
-                            perturb_step, stop_after_solved
+                            perturb_step, stop_after_solved,
+                            perturb_type
 
         );
       },
@@ -326,12 +331,13 @@ PYBIND11_MODULE(simulator_bindings, m) {
 
          bool keep_space_around_bodies, int steps, int stride, bool need_images,
          bool need_featurized_objects, int perturb_step,
-         bool stop_after_solved) {
+         bool stop_after_solved, int perturb_type) {
         return magic_ponies(serialized_task,
                             deserialize<UserInput>(serialized_user_input),
                             keep_space_around_bodies, steps, stride,
                             need_images, need_featurized_objects,
-                            perturb_step, stop_after_solved
+                            perturb_step, stop_after_solved,
+                            perturb_type
 
         );
       },

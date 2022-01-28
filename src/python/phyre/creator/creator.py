@@ -289,6 +289,8 @@ class Body(object):
             position=scene_if.Vector(x, y),
             angle=0.,
             shapes=shapes,
+            velocity=scene_if.Vector(0, 0),
+            angular_velocity=0,
         )
         assert dynamic in [True, False]
         body.bodyType = (scene_if.BodyType.DYNAMIC
@@ -317,7 +319,8 @@ class Body(object):
 
     def set(self, **attributes):
         order = ('angle', 'left', 'right', 'top', 'bottom', 'center_x',
-                 'center_y', 'color', 'vel_x', 'vel_y', 'angular_velocity')
+                 'center_y', 'color', 'vel_x', 'vel_y', 'angular_velocity',
+                 'friction', 'restitution', 'gs')
         for name in order:
             if name in attributes:
                 getattr(self, 'set_' + name)(attributes.pop(name))
@@ -356,6 +359,19 @@ class Body(object):
         x, y = _rotate(x, y, self._thrift_body.angle)
         self._thrift_body.position.x += x
         self._thrift_body.position.y += y
+        return self
+
+    def set_friction(self, f):
+
+        self._thrift_body.friction = f
+        return self
+
+    def set_restitution(self, r):
+        self._thrift_body.restitution = r
+        return self
+
+    def set_gs(self, gs):
+        self._thrift_body.gravity_scale = gs
         return self
 
     def set_center(self, x, y):
@@ -409,6 +425,10 @@ class Body(object):
     def set_vel_y(self, y):
 
         self._thrift_body.velocity.y += y
+        return self
+
+    def set_ang_vel(self, av):
+        self._thrift_body.angular_velocity = av / 180. * math.pi
         return self
 
     @property

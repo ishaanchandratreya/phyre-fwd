@@ -78,6 +78,7 @@ def build_task(C, ball_x, ball_scale, y_span, target_index, jar_scale, align):
         bottom=0,
         left=jar.right,
         angle=90.)
+
     if jar_guard_r.right > C.scene.width:
         raise creator_lib.SkipTemplateParams
     ball = C.add('dynamic ball', scale=ball_scale) \

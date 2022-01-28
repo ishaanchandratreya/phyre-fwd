@@ -341,6 +341,8 @@ bool mergeUserInputIntoScene(const ::scene::UserInput& userInput,
       }
     }
     if (!hasOcclusions || allowOcclusions) {
+
+      //std::cout << "pushing new bodies back" << std::endl;
       bodies->push_back(
           buildCircle(ball.position.x, ball.position.y, ball.radius, ball.velocity.x, ball.velocity.y, ball.angular_velocity));
     }
@@ -439,5 +441,5 @@ void featurizeBody(const Body& body, int sceneHeight, int sceneWidth,
 
   *buffer++ = static_cast<float>(body.velocity.x) / sceneWidth;
   *buffer++ = static_cast<float>(body.velocity.y) / sceneHeight;
-  *buffer++ = wrapAngleRadians(body.angular_velocity) / (2 * M_PI);
+  *buffer++ = body.angular_velocity / (2. * M_PI);
 }

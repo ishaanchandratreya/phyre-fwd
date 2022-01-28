@@ -308,6 +308,7 @@ class ActionSimulator():
             task_index, user_input, need_images, need_featurized_objects,
             stride, perturb_step=perturb_step, nframes=nframes if use_nframes else DEFAULT_MAX_STEPS,
             stop_after_solved=stop_after_solved)
+
         if not stable or not main_status.is_solved():
             return phyre.simulation.Simulation(status=main_status,
                                                images=images,

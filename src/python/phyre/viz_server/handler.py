@@ -228,6 +228,12 @@ class ServiceHandler():
                 meta_task.eval_data.known_solutions, self._config['mode'],
                 task.tier)
 
+
+            for key in eval_stats:
+
+                eval_stats[key].pop('ball_v')
+
+
             status_counts = {
                 tier: stats[task_id]
                 for tier, stats in eval_stats['status_counts'].items()
@@ -365,6 +371,8 @@ def eval_stats_to_thrift(template_stats, task_id):
     thrift_eval_data = {}
     solutions_codes = []
     for tier in template_stats['status_counts']:
+        if tier == 'ball_v':
+            continue
         not_solved = template_stats['status_counts'][tier][task_id][NOT_SOLVED]
         solved = template_stats['status_counts'][tier][task_id][SOLVED]
         if solved > 0:
@@ -373,12 +381,18 @@ def eval_stats_to_thrift(template_stats, task_id):
             attempts = -1
         thrift_eval_data[f'attempts_to_solve_{tier}'] = attempts
     for tier in template_stats['flags']:
+        if tier == 'ball_v':
+            continue
         thrift_eval_data[f'flag_{tier}'] = find_flag_code(
             template_stats['flags'][tier][task_id])
     for tier in template_stats['solutions']:
+        if tier == 'ball_v':
+            continue
         if template_stats['solutions'][tier].get(task_id):
             solutions_codes.append(TIER_TO_CODE[tier])
     for tier in template_stats['unstable_solutions']:
+        if tier == 'ball_v':
+            continue
         if template_stats['unstable_solutions'][tier].get(task_id):
             solutions_codes.append(TIER_TO_CODE[tier] + 'U')
     thrift_eval_data['known_solutions'] = solutions_codes
