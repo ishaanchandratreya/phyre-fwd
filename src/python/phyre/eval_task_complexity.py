@@ -408,6 +408,10 @@ def maybe_load_evaluation(template_id, mode=LoadingMode.FULL):
                 final_eval_data[stat_name][tier][task] = value
     if solution_power is not None:
         for tier in phyre.action_mappers.ACTION_MAPPERS:
+
+            if tier == 'ball_v':
+                tier = 'ball'
+
             final_eval_data['solution_power'][tier][
                 'task_ids'] = solution_power['task_ids']
             final_eval_data['solution_power'][tier][

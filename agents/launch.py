@@ -11,7 +11,7 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-"""Launch script to run arguments stored in txt files."""
+#"""Launch script to run arguments stored in txt files."""
 import argparse
 import getpass
 import subprocess
@@ -51,6 +51,11 @@ def parse_args():
                         '--local',
                         action='store_true',
                         help='Run locally instead of launching to cluster')
+
+    parser.add_argument('-lc',
+                        '--local_carl',
+                        action='store_true',
+                        help='Run locally but with a local large GPU cluster')
     parser.add_argument('-v',
                         '--vis',
                         action='store_true',
@@ -82,6 +87,8 @@ def parse_args():
                         type=int,
                         default=None,
                         help='Run for this specific run_id, if known')
+
+    parser.add_argument('--num_gpu', type=int, default=1, help='Number of gpus override')
     parser.add_argument('rest', nargs=argparse.REMAINDER)
     args = parser.parse_args()
     return args
@@ -237,7 +244,7 @@ def construct_cmd(args):
         assert args.cfg.startswith('expts'), 'Must be wrt this directory'
     agent_folder = '{}/{}'.format(BASE_RUN_DIR,
                                   args.cfg if args.cfg else 'default')
-    if args.local and not args.test:
+    if (args.local or args.local_carl) and not args.test:
         # If args.test, then might be testing a model from other dir
         agent_folder = os.path.join(agent_folder, 'local')
     if args.tb:  # Run tensorboard only
@@ -263,7 +270,7 @@ def construct_cmd(args):
     cli = ' {} train2.py hydra.run.dir={} '.format(
         'kernprof -l ' if args.profile else 'python ', agent_folder)
     run_id, cli_stuff = read_file_into_cli(args.cfg,
-                                           running_local=args.local,
+                                           running_local=args.local or args.local_carl,
                                            run_id=args.run_id)
     cli_stuff = [f"'{el}'" for el in cli_stuff]
     cli += ' '.join(cli_stuff)
@@ -275,29 +282,46 @@ def construct_cmd(args):
     if args.test:
         # wts_folder = get_models_dir(agent_folder) if args.local else 'last'
         wts_folder = (os.path.join(agent_folder, str(run_id))
-                      if args.local else 'last')
+                      if (args.local or args.local_carl) else 'last')
         cli += ' agent.weights_folder={} '.format(wts_folder)
+
+
     if args.local:
-        cli += (' num_gpus=1 train.batch_size=2 '
+        
+        cli += (' num_gpus=4 train.batch_size=2 '
                 ' eval.batch_size=4 '
                 ' train.data_loader.num_workers=0 '
                 ' eval.data_loader.num_workers=0 ')
+
+    if args.num_gpu:
+
+        cli += (f' num_gpus={int(args.num_gpu)}')
+    
+
+
+
+
+
     cli += ' ' + ' '.join(args.rest)
     # This must go at the end, the other args must go before
-    if not args.local:
+    if not (args.local or args.local_carl):
         cli += ' -m '
     return cli
 
 
 def main():
     """Main func."""
+    #print('Entering main function')
     args = parse_args()
-    # if args.cls:
+    #print('Parsing args')
+   # if args.cls:
     #     args = gen_cls_override_file(args)
     cmd = construct_cmd(args)
-    print('>> Running "{}"'.format(cmd))
-    subprocess.call(cmd, shell=True)
+    print(cmd)
 
+
+    #print('>> Running "{}"'.format(cmd))
+    subprocess.call(cmd, shell=True)
 
 if __name__ == '__main__':
     main()

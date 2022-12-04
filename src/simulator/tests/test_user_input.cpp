@@ -184,7 +184,7 @@ TEST(RenderTest, SimpleBoxNearBoredrRendering) {
 
 TEST(RenderTest, CircleRendering) {
   // The center is located in the center of pixel (2, 1).
-  const std::vector<::scene::Body> bodies = {buildCircle(2.5, 1.5, 1)};
+  const std::vector<::scene::Body> bodies = {buildCircle(2.5, 1.5, 1, 0, 0, 0)};
   const int height = 7;
   const int width = 6;
   auto img = render(bodies, height, width);
@@ -215,10 +215,10 @@ TEST(RenderTest, CircleRendering_OutOfSceen) {
   const int height = 7;
   const int width = 6;
   const std::vector<::scene::Body> balls = {
-      buildCircle(-2.5, 1.5, 1),
-      buildCircle(12.5, 11.5, 1),
-      buildCircle(2.5, -1.5, 1),
-      buildCircle(2.5, 11.5, 1),
+      buildCircle(-2.5, 1.5, 1, 0, 0, 0),
+      buildCircle(12.5, 11.5, 1, 0, 0, 0),
+      buildCircle(2.5, -1.5, 1, 0, 0, 0),
+      buildCircle(2.5, 11.5, 1, 0, 0, 0),
   };
   for (const auto& ball : balls) {
     // The center is located in the center of pixel (2, 1).
@@ -241,7 +241,7 @@ TEST(RenderTest, CircleRendering_Huge) {
   const int height = 7;
   const int width = 6;
   const std::vector<::scene::Body> balls = {
-      buildCircle(2.5, 1.5, 100),
+      buildCircle(2.5, 1.5, 100, 0, 0, 0),
   };
   for (const auto& ball : balls) {
     // The center is located in the center of pixel (2, 1).
@@ -392,7 +392,7 @@ TEST(CleanUpPointsTest, CircleAndFullInput) {
     }
   }
   // Put box in the middle of the scene so that it cannot reach a wall.
-  const auto body = buildCircle(100, 100, 10);
+  const auto body = buildCircle(100, 100, 10, 0, 0, 0);
   const auto cleanPoints = cleanUpPoints(inputPoints, {body}, width, height);
   // Check that inside points are not among clean.
   for (const auto& point : inputPoints) {
@@ -526,7 +526,7 @@ TEST(AddUserInputTest, AddOccludingBallForBallScene) {
   ::scene::Scene scene;
   scene.__set_height(7);
   scene.__set_width(6);
-  const std::vector<::scene::Body> bodies = {buildCircle(2, 3, 1)};
+  const std::vector<::scene::Body> bodies = {buildCircle(2, 3, 1, 0, 0, 0)};
   scene.__set_bodies(bodies);
 
   // Distance is 2.
@@ -550,7 +550,7 @@ TEST(AddUserInputTest, AddBallForBallScene) {
   ::scene::Scene scene;
   scene.__set_height(7);
   scene.__set_width(6);
-  const std::vector<::scene::Body> bodies = {buildCircle(2, 3, 1)};
+  const std::vector<::scene::Body> bodies = {buildCircle(2, 3, 1, 0, 0, 0)};
   scene.__set_bodies(bodies);
 
   // Distance is 2.

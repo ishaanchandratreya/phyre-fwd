@@ -150,9 +150,14 @@ def scene_to_featurized_objects(scene):
     object_vector = simulator_bindings.featurize_scene(serialize(scene))
     object_vector = np.array(object_vector, dtype=np.float32).reshape(
         (-1, OBJECT_FEATURE_SIZE))
+
+
     return phyre.simulation.FeaturizedObjects(
-        phyre.simulation.finalize_featurized_objects(
-            np.expand_dims(object_vector, axis=0)))
+        np.expand_dims(object_vector, axis=0)
+    )
+    #return phyre.simulation.FeaturizedObjects(
+    #    phyre.simulation.finalize_featurized_objects(
+    #        np.expand_dims(object_vector, axis=0)))
 
 
 def _deep_flatten(iterable):
@@ -194,7 +199,8 @@ def magic_ponies(task,
                  need_images=False,
                  need_featurized_objects=False,
                  perturb_step=-1,
-                 stop_after_solved=True):
+                 stop_after_solved=True,
+                 perturb_type=-1):
     """Check a solution for a task and return intermidiate images.
 
     Args:
@@ -221,6 +227,9 @@ def magic_ponies(task,
             not perturb at all.
         stop_after_solved: Stop the simulation once solved. Set to False
             to keep it running, for training forward models better.
+        perturb_type: new int used to control how drag/stochasticity works with
+        different elements in the environment
+
 
     Returns:
         A tuple (is_solved, had_occlusions, images, objects) if with_times is False.
@@ -237,6 +246,7 @@ def magic_ponies(task,
         serialized_task = task
         height, width = creator.SCENE_HEIGHT, creator.SCENE_WIDTH
     else:
+
         serialized_task = serialize(task)
         height, width = task.scene.height, task.scene.width
     if isinstance(user_input, scene_if.UserInput):
@@ -247,7 +257,23 @@ def magic_ponies(task,
                                                     steps, stride, need_images,
                                                     need_featurized_objects,
                                                     perturb_step,
-                                                    stop_after_solved))
+                                                    stop_after_solved,
+                                                    perturb_type))
+
+        #print(packed_featurized_objects)
+
+    elif user_input is None:
+        points, rectangulars, balls = _prepare_user_input(None, None, None)
+        is_solved, had_occlusions, packed_images, packed_featurized_objects, number_objects, sim_time, pack_time = (
+            simulator_bindings.magic_ponies(serialized_task, points,
+                                            rectangulars, balls,
+                                            keep_space_around_bodies, steps,
+                                            stride, need_images,
+                                            need_featurized_objects,
+                                            perturb_step,
+                                            stop_after_solved,
+                                            perturb_type))
+
     else:
         points, rectangulars, balls = _prepare_user_input(*user_input)
         is_solved, had_occlusions, packed_images, packed_featurized_objects, number_objects, sim_time, pack_time = (
@@ -257,7 +283,8 @@ def magic_ponies(task,
                                             stride, need_images,
                                             need_featurized_objects,
                                             perturb_step,
-                                            stop_after_solved))
+                                            stop_after_solved,
+                                            perturb_type))
 
     packed_images = np.array(packed_images, dtype=np.uint8)
 
@@ -266,8 +293,9 @@ def magic_ponies(task,
                                          dtype=np.float32)
     packed_featurized_objects = packed_featurized_objects.reshape(
         (-1, number_objects, OBJECT_FEATURE_SIZE))
-    packed_featurized_objects = phyre.simulation.finalize_featurized_objects(
-        packed_featurized_objects)
+    #packed_featurized_objects = phyre.simulation.finalize_featurized_objects(
+    #    packed_featurized_objects)
+
     if with_times:
         return is_solved, had_occlusions, images, packed_featurized_objects, sim_time, pack_time
     else:

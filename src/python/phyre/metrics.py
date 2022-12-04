@@ -59,6 +59,7 @@ def eval_setup_to_action_tier(eval_setup_name: str) -> str:
     for tier in phyre.action_mappers.ACTION_MAPPERS:
         if eval_setup_name.startswith(tier):
             return tier
+
     raise ValueError('Failed to derive action tier for eval setup %s' %
                      eval_setup_name)
 
@@ -93,6 +94,16 @@ def get_fold(eval_setup: str, seed: int
     train_ids, dev_ids = _flatten_eval_setup(builder(seed=seed, dev_seed=0))
     return train_ids, dev_ids, test_ids
 
+
+def is_task_in_eval_setup(eval_setup: EvalSetup, task_template):
+
+    for train_ids, test_groups in eval_setup:
+        for train_id in train_ids:
+            if task_template in train_id:
+
+                return True
+
+    return False
 
 def _flatten_eval_setup(eval_setup: EvalSetup
                        ) -> Tuple[Tuple[str, ...], Tuple[str, ...]]:

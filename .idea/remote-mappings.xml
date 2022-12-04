@@ -1,0 +1,17 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project version="4">
+  <component name="RemoteMappingsManager">
+    <list>
+      <list>
+        <remote-mappings server-id="python@sftp://ipc2107@cv05.cs.columbia.edu:22/home/ipc2107/.conda/envs/phyre-fwd/bin/python" />
+        <remote-mappings server-id="python@sftp://ipc2107@cv09.cs.columbia.edu:22/home/ipc2107/.conda/envs/phyre-fwd/bin/python">
+          <settings>
+            <list>
+              <mapping local-root="$PROJECT_DIR$" remote-root="/proj/vondrick/ishaan/phyre-fwd" />
+            </list>
+          </settings>
+        </remote-mappings>
+      </list>
+    </list>
+  </component>
+</project>

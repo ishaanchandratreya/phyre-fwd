@@ -53,10 +53,10 @@ b2FixtureDef getFixtureFromThriftBody(const ::scene::Body& pThriftBody) {
   b2FixtureDef fixture;
   if (pThriftBody.bodyType == ::scene::BodyType::DYNAMIC) {
     // Set the shape density to be non-zero, so it will be dynamic.
-    fixture.density = DEFAULT_DENSITY;
+    fixture.density = pThriftBody.density;
   }
-  fixture.friction = DEFAULT_FRICTION;
-  fixture.restitution = DEFAULT_RESTITUTION;
+  fixture.friction = pThriftBody.friction;
+  fixture.restitution = pThriftBody.restitution;
 
   return fixture;
 }
@@ -91,11 +91,15 @@ b2BodyDef convertThriftBodyToBox2dBodyDef(const ::scene::Body& pThriftBody) {
   bodyDef.position.Set(p2m(pThriftBody.position.x),
                        p2m(pThriftBody.position.y));
   bodyDef.angle = pThriftBody.angle;
-  bodyDef.angularDamping = DEFAULT_ANGULAR_DAMPING;
-  bodyDef.linearDamping = DEFAULT_LINEAR_DAMPING;
+  bodyDef.angularDamping = pThriftBody.angular_damping;
+  bodyDef.linearDamping = pThriftBody.linear_damping;
+  bodyDef.gravityScale = pThriftBody.gravity_scale;
 
   if (pThriftBody.bodyType == ::scene::BodyType::DYNAMIC) {
     bodyDef.type = b2_dynamicBody;
+    bodyDef.linearVelocity.Set(p2m(pThriftBody.velocity.x),
+                               p2m(pThriftBody.velocity.y));
+    bodyDef.angularVelocity = pThriftBody.angular_velocity;
   }
   return bodyDef;
 }
@@ -147,6 +151,7 @@ std::unique_ptr<b2WorldWithData> convertSceneToBox2dWorld(
     const ::scene::Scene& scene) {
   const b2Vec2 gravity(0.0f, DEFAULT_GRAVITY);
   std::unique_ptr<b2WorldWithData> world(new b2WorldWithData(gravity));
+
   addBodiesToWorld(*world, scene.bodies, Box2dData::GENERAL);
   addBodiesToWorld(*world, scene.user_input_bodies, Box2dData::USER);
   return world;
@@ -189,6 +194,10 @@ std::unique_ptr<b2WorldWithData> convertSceneToBox2dWorld_with_bounding_boxes(
     body.position.__set_x(m2p(box2dBody->GetPosition().x));
     body.position.__set_y(m2p(box2dBody->GetPosition().y));
     body.__set_angle(box2dBody->GetAngle());
+    body.velocity.__set_x(m2p(box2dBody->GetLinearVelocity().x));
+    body.velocity.__set_y(m2p(box2dBody->GetLinearVelocity().y));
+    body.__set_angular_velocity(box2dBody->GetAngularVelocity());
+
   }
   return new_scene;
 }

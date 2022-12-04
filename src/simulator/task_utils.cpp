@@ -16,6 +16,7 @@
 #include "thrift_box2d_conversion.h"
 
 #include <iostream>
+#include <random>
 
 namespace {
 struct SimulationRequest {
@@ -23,17 +24,47 @@ struct SimulationRequest {
   int stride;
   int perturbStep = -1;  // Perturb the simulation at this point, -1 => don't
   bool stopAfterSolved = true;  // Stop the simulation once solved
+  int perturbType = -1; // Type of perturbation involved (for stochasticity of environment)
 };
 
-void perturbSimulation(std::unique_ptr<b2WorldWithData> &world) {
+void perturbSimulation(std::unique_ptr<b2WorldWithData> &world, const SimulationRequest &request) {
   // Takes the current world, and applies some random
   // perturbations to the simulation.
   // TODO(rgirdhar): Support other perturbations than just flipping the gravity
   // TODO(rgirdhar): Expose interface to SimulationRequest to specify kind of
   //   perturbation etc?
-  auto cur_grav = world->GetGravity();
-  cur_grav = -cur_grav;
-  world->SetGravity(cur_grav);
+
+
+  //perturb_type 0 corresponds to gravity flip
+  if (request.perturbType == 0){
+    auto cur_grav = world->GetGravity();
+    cur_grav = -cur_grav;
+    world->SetGravity(cur_grav);
+  }
+
+
+  //perturb type 1 corresponds to fluctuations in gravity
+  //TODO: function may be buggy (check sign on gravity)
+  if (request.perturbType == 1){
+
+    std::random_device rd;
+    std::mt19937 gen(rd());
+    std::uniform_real_distribution<> dis(0.0, 0.1);
+    auto cur_grav = world->GetGravity();
+
+    if (cur_grav.y > 10){
+        cur_grav += dis(gen) * cur_grav;
+    }
+    else if (cur_grav.y > 9){
+        cur_grav -= dis(gen) * cur_grav;
+    }
+    else {
+        cur_grav = world->GetGravity();
+    }
+
+    world->SetGravity(cur_grav);
+
+  }
 }
 
 // Runs simulation for the scene. If task is not nullptr, is-task-solved checks
@@ -42,6 +73,32 @@ void perturbSimulation(std::unique_ptr<b2WorldWithData> &world) {
                                     const SimulationRequest &request,
                                     const ::task::Task *task) {
   std::unique_ptr<b2WorldWithData> world = convertSceneToBox2dWorld(scene);
+
+  /*
+  b2Body* c_body = world->GetBodyList();
+
+
+  while (c_body != nullptr){
+
+    std::cout << "type" << c_body->GetType() << std::endl;
+    std::cout << "lin damping" << c_body->GetLinearDamping() << std::endl;
+    std::cout << "ang damping" << c_body->GetAngularDamping() << std::endl;
+    std::cout << "gravity scale" << c_body->GetGravityScale() << std::endl;
+    std::cout << "mass" << c_body->GetMass() << std::endl;
+
+    c_body = c_body -> GetNext();
+  }
+  */
+
+
+
+
+  bool warmStart = true;
+  world->SetWarmStarting(warmStart);
+
+  //std::cout << "Does the world auto clear forces" << world->GetAutoClearForces() << std::endl;
+  //std::cout << "Does the world substep" << world->GetSubStepping() << std::endl;
+  //std::cout << "Does the world support continuous physics" << world->GetContinuousPhysics() << std::endl;
 
   unsigned int continuousSolvedCount = 0;
   std::vector<::scene::Scene> scenes;
@@ -66,14 +123,27 @@ void perturbSimulation(std::unique_ptr<b2WorldWithData> &world) {
   const bool allowInstantSolution =
       (task != nullptr && task->relationships.size() == 1 &&
        task->relationships[0] == ::task::SpatialRelationship::TOUCHING_BRIEFLY);
+
+  //b2ContactManager cm = world->GetContactManager();
+  //b2ContactManager* other_cm = const_cast<b2ContactManager*>(&cm);
+  //other_cm->FindNewContacts();
+
+  scenes.push_back(updateSceneFromWorld(scene, *world));
+  //std::cout << "Number of contacts at timestep " << step << "is" << world->GetContactCount() << std::endl;
+  //std::cout << "Number of joint at timestep " << step << "is" << world->GetJointCount() << std::endl;
+  //TODO: Do it at non zero time-step (if collision detected in previous)
+  world->Step(kTimeStep/100, 1, 1);
   for (; step < request.maxSteps; step++) {
     // Instruct the world to perform a single step of simulation.
     // It is generally best to keep the time step and iterations fixed.
     world->Step(kTimeStep, kVelocityIterations, kPositionIterations);
+
+    //std::cout << "Number of contacts at timestep " << step << "is" << world->GetContactCount() << std::endl;
+    //std::cout << "Number of joints at timestep " << step << "is" << world->GetJointCount() << std::endl;
     if (step == request.perturbStep && request.perturbStep != -1) {
-      perturbSimulation(world);
+      perturbSimulation(world, request);
     }
-    if (request.stride > 0 && step % request.stride == 0) {
+    if (request.stride > 0 && (step+1) % request.stride == 0) {
       scenes.push_back(updateSceneFromWorld(scene, *world));
     }
     if (task == nullptr) {
@@ -90,6 +160,7 @@ void perturbSimulation(std::unique_ptr<b2WorldWithData> &world) {
             // optionally let the simulation run, since it might make learning
             // forward models a bit more stable.
             if (request.stopAfterSolved) {
+              //if you are here this means that simulation is in "done" state
               break;
             }
           }
@@ -138,8 +209,9 @@ std::vector<::scene::Scene> simulateScene(const ::scene::Scene &scene,
 ::task::TaskSimulation simulateTask(const ::task::Task &task,
                                     const int num_steps, const int stride,
                                     const int perturb_step,
-                                    const bool stop_after_solved) {
+                                    const bool stop_after_solved,
+                                    const int perturb_type) {
   const SimulationRequest request{
-    num_steps, stride, perturb_step, stop_after_solved};
+    num_steps, stride, perturb_step, stop_after_solved, perturb_type};
   return simulateTask(task.scene, request, &task);
 }

@@ -19,7 +19,7 @@
 #include "gen-cpp/scene_types.h"
 #include "gen-cpp/task_types.h"
 
-constexpr unsigned kObjectFeatureSize = 14;
+constexpr unsigned kObjectFeatureSize = 17;
 constexpr unsigned kNumColors = 6;
 constexpr unsigned kNumShapes = 4;
 
@@ -48,12 +48,13 @@ std::vector<::scene::Scene> simulateScene(const ::scene::Scene& scene,
 ::task::TaskSimulation simulateTask(const ::task::Task& task,
                                     const int num_steps, const int stride = 1,
                                     const int perturb_step = -1,
-                                    const bool stop_after_solved = true);
+                                    const bool stop_after_solved = true,
+                                    const int perturb_type = -1);
 
 // Run simulation in parallel using worker pool of num_workers processes.
 std::vector<::task::TaskSimulation> simulateTasksInParallel(
     const std::vector<::task::Task>& tasks, const int num_workers,
     const int num_steps, const int stride = 1, const int perturb_step = -1,
-    const bool stop_after_solved = true);
+    const bool stop_after_solved = true, const int perturb_type = -1);
 
 #endif  // TASK_UTILS_H

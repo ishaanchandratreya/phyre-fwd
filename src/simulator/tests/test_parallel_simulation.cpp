@@ -43,7 +43,7 @@ Scene CreateDemoScene(int seed, bool use_balls = false) {
   for (int i = 0; i < 5 + randint(10); ++i) {
     if (use_balls) {
       bodies.push_back(
-          buildCircle(20 + 37 * i, 200 + 15 * randint(2), 20 - randint(15)));
+          buildCircle(20 + 37 * i, 200 + 15 * randint(2), 20 - randint(15), 0, 0, 0));
     } else {
       bodies.push_back(buildBox(20 + 37 * i, 200 + 15 * randint(2),
                                 20 - randint(15), 20 - randint(15), i * 5));

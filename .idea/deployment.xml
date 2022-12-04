@@ -1,0 +1,76 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project version="4">
+  <component name="PublishConfigData" autoUpload="Always" serverName="ipc2107@cv10.cs.columbia.edu:22 password" remoteFilesAllowedToDisappearOnAutoupload="false">
+    <serverData>
+      <paths name="cv02">
+        <serverdata>
+          <mappings>
+            <mapping deploy="/proj/vondrick/ishaan/phyre-fwd" local="$PROJECT_DIR$" web="/proj/vondrick/ishaan/phyre-fwd" />
+            <mapping local="" />
+          </mappings>
+        </serverdata>
+      </paths>
+      <paths name="cv05">
+        <serverdata>
+          <mappings>
+            <mapping deploy="/proj/vondrick/ishaan/phyre-fwd" local="$PROJECT_DIR$" />
+          </mappings>
+        </serverdata>
+      </paths>
+      <paths name="cv05 (1)">
+        <serverdata>
+          <mappings>
+            <mapping deploy="/proj/vondrick/ishaan/phyre-fwd" local="$PROJECT_DIR$" web="/proj/vondrick/ishaan/phyre-fwd" />
+            <mapping local="" />
+          </mappings>
+        </serverdata>
+      </paths>
+      <paths name="cv05 (4)">
+        <serverdata>
+          <mappings>
+            <mapping deploy="/proj/vondrick/ishaan/phyre-fwd" local="$PROJECT_DIR$" web="/proj/vondrick/ishaan/phyre-fwd" />
+            <mapping local="" />
+          </mappings>
+        </serverdata>
+      </paths>
+      <paths name="cv05 (6)">
+        <serverdata>
+          <mappings>
+            <mapping deploy="/proj/vondrick/ishaan/phyre-fwd" local="$PROJECT_DIR$" />
+          </mappings>
+        </serverdata>
+      </paths>
+      <paths name="ipc2107@cv02.cs.columbia.edu:22 password">
+        <serverdata>
+          <mappings>
+            <mapping deploy="/proj/vondrick/ishaan/phyre-fwd" local="$PROJECT_DIR$" web="/proj/vondrick/ishaan/phyre-fwd" />
+            <mapping local="" />
+          </mappings>
+        </serverdata>
+      </paths>
+      <paths name="ipc2107@cv09.cs.columbia.edu:22 password">
+        <serverdata>
+          <mappings>
+            <mapping deploy="/proj/vondrick/ishaan/phyre-fwd" local="$PROJECT_DIR$" web="/proj/vondrick/ishaan/phyre-fwd" />
+            <mapping local="" />
+          </mappings>
+        </serverdata>
+      </paths>
+      <paths name="ipc2107@cv10.cs.columbia.edu:22 password">
+        <serverdata>
+          <mappings>
+            <mapping deploy="/proj/vondrick/ishaan/phyre-fwd" local="$PROJECT_DIR$" />
+          </mappings>
+        </serverdata>
+      </paths>
+      <paths name="ipc2107@cv10.cs.columbia.edu:22 password (1)">
+        <serverdata>
+          <mappings>
+            <mapping deploy="/proj/vondrick/ishaan/phyre-fwd" local="$PROJECT_DIR$" />
+          </mappings>
+        </serverdata>
+      </paths>
+    </serverData>
+    <option name="myAutoUpload" value="ALWAYS" />
+  </component>
+</project>

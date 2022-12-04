@@ -119,9 +119,14 @@ class ObjTrainer(im_fwd_agent.ImgTrainer):
             model = obj_nets.FwdObject(cfg)
         if on_cpu:
             return model.cpu()
+
+        print('Using GPUS:', cfg.num_gpus)
         assert cfg.num_gpus <= torch.cuda.device_count()
         model = torch.nn.DataParallel(model,
                                       device_ids=list(range(cfg.num_gpus)))
+
+
+
         return model
 
     @classmethod
@@ -133,6 +138,9 @@ class ObjTrainer(im_fwd_agent.ImgTrainer):
         save_checkpoints_every = cfg.train.save_checkpoints_every
         full_eval_every = cfg.train.full_eval_every
         train_batch_size = cfg.train.batch_size
+
+        print(train_batch_size)
+        print(cfg.eval.batch_size)
         max_frames_fwd = cfg.train.frames_per_clip
         n_hist_frames = cfg.train.n_hist_frames  # Frames used to predict the future
         loss_cfg = cfg.train.obj_loss
@@ -259,6 +267,7 @@ class ObjTrainer(im_fwd_agent.ImgTrainer):
                     # Asking for half the batch size since the dataloader is designed
                     # to give 2 elements per batch (for class balancing)
                     batch_size=train_batch_size // 2)):
+
             batch_id = batch_data_id + batch_start
             if (batch_id + 1) >= updates:
                 im_fwd_agent.save_agent(output_dir, batch_id + 1, model,
@@ -287,6 +296,8 @@ class ObjTrainer(im_fwd_agent.ImgTrainer):
                     train_noise_frac = cfg.agent.train_noise_percent * (
                         1 -
                         (batch_id - start_noise_decay) / noise_decay_updates)
+
+
             _, batch_losses = model.forward(
                 batch_obj_obs,
                 batch_is_solved,
@@ -379,3 +390,5 @@ class ObjTrainer(im_fwd_agent.ImgTrainer):
             if scheduler is not None:
                 scheduler.step()
         return model.cpu()
+
+

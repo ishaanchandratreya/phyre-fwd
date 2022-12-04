@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project version="4">
+  <component name="WebServers">
+    <option name="servers">
+      <webServer id="1762ecd0-7500-43f0-938a-d9674cb35806" name="cv02">
+        <fileTransfer accessType="SFTP" host="cv02.cs.columbia.edu" port="22" sshConfigId="d60c466d-93be-4a79-a6f0-e36f611973b1" sshConfig="ipc2107@cv02.cs.columbia.edu:22 password">
+          <advancedOptions>
+            <advancedOptions dataProtectionLevel="Private" passiveMode="true" shareSSLContext="true" />
+          </advancedOptions>
+        </fileTransfer>
+      </webServer>
+    </option>
+  </component>
+</project>

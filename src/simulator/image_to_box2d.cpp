@@ -341,8 +341,10 @@ bool mergeUserInputIntoScene(const ::scene::UserInput& userInput,
       }
     }
     if (!hasOcclusions || allowOcclusions) {
+
+      //std::cout << "pushing new bodies back" << std::endl;
       bodies->push_back(
-          buildCircle(ball.position.x, ball.position.y, ball.radius));
+          buildCircle(ball.position.x, ball.position.y, ball.radius, ball.velocity.x, ball.velocity.y, ball.angular_velocity));
     }
   }
 
@@ -424,7 +426,7 @@ float wrapAngleRadians(float angle) {
 
 void featurizeBody(const Body& body, int sceneHeight, int sceneWidth,
                    float* buffer) {
-  static_assert(kObjectFeatureSize == 14);
+  static_assert(kObjectFeatureSize == 17, "err");
   *buffer++ = static_cast<float>(body.position.x) / sceneWidth;
   *buffer++ = static_cast<float>(body.position.y) / sceneHeight;
   *buffer++ = wrapAngleRadians(body.angle) / (2. * M_PI);
@@ -436,4 +438,8 @@ void featurizeBody(const Body& body, int sceneHeight, int sceneWidth,
   for (int i = 0; i < kNumColors; ++i) {
     *buffer++ = static_cast<float>(i == body.color - 1);
   }
+
+  *buffer++ = static_cast<float>(body.velocity.x) / sceneWidth;
+  *buffer++ = static_cast<float>(body.velocity.y) / sceneHeight;
+  *buffer++ = body.angular_velocity / (2. * M_PI);
 }

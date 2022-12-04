@@ -22,13 +22,9 @@ import phyre.creator as creator_lib
     bar_x=np.linspace(0.2, 0.8, 5),
     ball_size=np.linspace(0.05, 0.25, 5),
     ramp_size=np.linspace(0.05, 0.2, 5),
-    search_params=dict(
-        required_flags=['BALL:GOOD_STABLE'],
-        excluded_flags=['BALL:TRIVIAL'],
-        diversify_tier='ball',
-    ),
-    version='2',
 )
+
+
 def build_task(C, bar_height, bar_x, ball_size, ramp_size):
     scene_width = C.scene.width
     scene_height = C.scene.height

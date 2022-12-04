@@ -29,7 +29,7 @@ import phyre.loader
 import phyre.simulator
 import phyre.interface.scene.ttypes as scene_if
 import phyre.interface.task.ttypes as task_if
-import phyre.simulation
+from phyre.simulator import DEFAULT_MAX_STEPS
 
 MAX_RELATION = max(task_if.SpatialRelationship._VALUES_TO_NAMES) + 1
 # First 4 objects are walls. Everything else are visible objects and encoded
@@ -177,11 +177,11 @@ class ActionSimulator():
 
     def _simulate_user_input(
             self, task_index, user_input, need_images, need_featurized_objects,
-            stride, perturb_step, nframes, stop_after_solved
+            stride, perturb_step, nframes, stop_after_solved, use_nframes=True
         ) -> Tuple[SimulationStatus, MaybeImages, MaybeObjects]:
         serialzed_task = self._serialized[task_index]
         # FIXME: merge this into single call to simulator.
-        if not self._action_mapper.OCCLUSIONS_ALLOWED:
+        if not self._action_mapper.OCCLUSIONS_ALLOWED and user_input is not None:
             if phyre.simulator.check_for_occlusions(
                     serialzed_task,
                     user_input,
@@ -193,7 +193,7 @@ class ActionSimulator():
         is_solved, had_occlusions, images, objects = phyre.simulator.magic_ponies(
             serialzed_task,
             user_input,
-            steps=nframes,
+            steps=nframes if use_nframes else DEFAULT_MAX_STEPS,
             stride=stride,
             keep_space_around_bodies=self._keep_spaces,
             need_images=need_images,
@@ -268,6 +268,7 @@ class ActionSimulator():
                         # src/simulator/task_utils.h:kMaxSteps
                         nframes: int = 1000,
                         stop_after_solved: bool = True,
+                        use_nframes: bool = True
                        ) -> phyre.simulation.Simulation:
         """Runs simluation for the action.
 
@@ -298,15 +299,21 @@ class ActionSimulator():
                  accesible with simulation.simulation_status, simulation.images,
                  and simulation.featurized_objects.
         """
-        user_input, is_valid = self._get_user_input(action)
+        if action is not None:
+            user_input, is_valid = self._get_user_input(action)
+        else:
+            user_input = None
+            is_valid = True
+
         if not is_valid:
             return phyre.simulation.Simulation(
                 status=SimulationStatus.INVALID_INPUT)
 
         main_status, images, objects = self._simulate_user_input(
             task_index, user_input, need_images, need_featurized_objects,
-            stride, perturb_step=perturb_step, nframes=nframes,
+            stride, perturb_step=perturb_step, nframes=nframes if use_nframes else DEFAULT_MAX_STEPS,
             stop_after_solved=stop_after_solved)
+
         if not stable or not main_status.is_solved():
             return phyre.simulation.Simulation(status=main_status,
                                                images=images,
@@ -398,4 +405,17 @@ def initialize_simulator(task_ids: Sequence[str],
                           drop_objs: Sequence[int] = ()) -> ActionSimulator:
     """Initialize ActionSimulator for given tasks and tier."""
     tasks = phyre.loader.load_compiled_task_list(task_ids)
+
+    for task in tasks:
+        for body in task.scene.bodies:
+            if body.velocity is None:
+                body.velocity = scene_if.Vector(0.0, 0.0)
+                body.angular_velocity = 0.0
+
+    return ActionSimulator(tasks, action_tier, drop_objs=drop_objs)
+
+
+def initialize_simulator_without_compile(tasks,
+                                         action_tier, drop_objs = ()) -> ActionSimulator:
+
     return ActionSimulator(tasks, action_tier, drop_objs=drop_objs)
